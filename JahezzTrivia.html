@@ -1749,11 +1749,15 @@ function connectTwitch() {
         const msgMatch = raw.match(/PRIVMSG #\w+ :(.+)/);
         if (nickMatch && msgMatch) {
           const nick = nickMatch[1];
-          const msg = msgMatch[1].trim().toLowerCase().replace(/\r/g,'');
-          // استخراج لون المرسل من tags
+          const msgRaw = msgMatch[1].trim().replace(/\r/g,'');
+          const msg = msgRaw.toLowerCase();
+          // لون المرسل
           const colorMatch = raw.match(/color=(#[0-9A-Fa-f]{6})/);
           const senderColor = colorMatch ? colorMatch[1] : null;
-          addLog(`${nick}: ${msg}`, 'info', senderColor);
+          // emotes من tags: emotes=302976560:0-9/emotesv2_xxx:11-20
+          const emotesMatch = raw.match(/(?:^|;)emotes=([^;]*)/);
+          const emotesStr = emotesMatch ? emotesMatch[1] : '';
+          addLog(`${nick}: ${msgRaw}`, 'info', senderColor, emotesStr);
           if (msg === '!join') handleJoin(nick, badges);
           else if (msg === '!leave') handleLeave(nick);
           else if (msg === '!start') handleModStart(nick, raw);
@@ -1868,7 +1872,37 @@ function setTwitchStatus(s) {
 const OWNER_BADGE_HTML = `<span title="صاحب الموقع" style="display:inline-flex;align-items:center;margin-left:3px;vertical-align:middle"><svg viewBox="0 0 14 14" width="13" height="13"><path d="M7 1 L8.8 5 L13 5.2 L9.8 8 L10.8 12 L7 9.8 L3.2 12 L4.2 8 L1 5.2 L5.2 5 Z" fill="#f5d060" stroke="#d4a017" stroke-width="0.5"/></svg></span>`;
 const OWNER_NAME = 'jzheadxx';
 
-function addLog(msg, type, senderColor) {
+// تحويل emotes لصور
+function parseEmotes(text, emotesStr) {
+  if (!emotesStr) return _escapeHtml(text);
+  // emotes format: id:start-end,start-end/id2:start-end
+  const replacements = [];
+  emotesStr.split('/').forEach(part => {
+    if (!part) return;
+    const [id, positions] = part.split(':');
+    if (!positions) return;
+    positions.split(',').forEach(pos => {
+      const [s, e] = pos.split('-').map(Number);
+      replacements.push({ s, e, id });
+    });
+  });
+  if (!replacements.length) return _escapeHtml(text);
+  replacements.sort((a,b) => a.s - b.s);
+  let result = '';
+  let last = 0;
+  replacements.forEach(({s, e, id}) => {
+    result += _escapeHtml(text.slice(last, s));
+    result += `<img src="https://static-cdn.jtvnw.net/emoticons/v2/${id}/default/dark/1.0" style="height:1.4em;vertical-align:middle;margin:0 2px" alt="${_escapeHtml(text.slice(s,e+1))}">`;
+    last = e + 1;
+  });
+  result += _escapeHtml(text.slice(last));
+  return result;
+}
+function _escapeHtml(t) {
+  return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function addLog(msg, type, senderColor, emotesStr) {
   const log = document.getElementById('twitchLog');
   if (log.children.length === 1 && log.children[0].style.padding === '16px 0') log.innerHTML = '';
   const div = document.createElement('div');
@@ -1888,22 +1922,33 @@ function addLog(msg, type, senderColor) {
     const colonIdx = msg.indexOf(':');
     if (colonIdx > 0) {
       const name = msg.slice(0, colonIdx).trim();
-      const rest = msg.slice(colonIdx);
+      const rest = msg.slice(colonIdx + 1).trim();
       const isOwner = name.toLowerCase() === OWNER_NAME;
-      const nameColor = isOwner ? '#ff3860' : (senderColor || 'var(--cyan2)');
+      // اللون: لو مالك → لونه من تويتش (senderColor) مع توهج، غيره → لونه العادي
+      const nameColor = senderColor || 'var(--cyan2)';
+      const glowStyle = isOwner
+        ? `;text-shadow:0 0 10px ${senderColor||'#ff3860'},0 0 20px ${senderColor||'#ff3860'}80`
+        : '';
       const badge = isOwner ? OWNER_BADGE_HTML : '';
-      // بادج + اسم ملوّن
+      const parsedRest = parseEmotes(rest, emotesStr||'');
       div.innerHTML =
-        '<span style="display:inline-flex;align-items:center;gap:1px">' +
+        '<span style="display:inline-flex;align-items:center;gap:2px">' +
         badge +
-        '<span style="color:' + nameColor + ';font-weight:700' + (isOwner ? ';text-shadow:0 0 8px rgba(255,56,96,.4)' : '') + '">' + name + '</span>' +
+        `<span style="color:${nameColor};font-weight:700${glowStyle}">${_escapeHtml(name)}</span>` +
         '</span>' +
-        '<span style="color:var(--text2)">' + rest + '</span>';
+        `<span style="color:var(--text2)">: ${parsedRest}</span>`;
     } else { div.textContent = msg; }
   } else { div.textContent = msg; }
 
   log.appendChild(div);
   log.scrollTop = log.scrollHeight;
+
+  // حذف الرسالة بعد 10 ثواني مع fade
+  setTimeout(() => {
+    div.style.transition = 'opacity 0.5s ease';
+    div.style.opacity = '0';
+    setTimeout(() => { if(div.parentNode) div.parentNode.removeChild(div); }, 500);
+  }, 10000);
 }
 
 function clearLog() {
