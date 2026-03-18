@@ -690,8 +690,8 @@ body::after{
 
 
 <!-- Easter Egg GIF -->
-<div id="eggOverlay" style="display:none;position:fixed;inset:0;z-index:9998;display:flex;align-items:center;justify-content:center;pointer-events:none;opacity:0;transition:opacity .3s">
-  <img id="eggGif" src="" style="max-width:80vw;max-height:80vh;border-radius:16px;box-shadow:0 0 60px rgba(0,0,0,.8)">
+<div id="eggOverlay" style="display:none;position:fixed;inset:0;z-index:9998;align-items:center;justify-content:center;pointer-events:none;opacity:0;transition:opacity .3s;background:rgba(0,0,0,0.15);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)">
+  <img id="eggGif" src="" style="width:min(70vw,70vh);height:min(70vw,70vh);object-fit:contain;border-radius:20px;box-shadow:0 0 80px rgba(0,0,0,.9),0 0 120px rgba(0,0,0,.5)">
 </div>
 
 <!-- Overlays -->
@@ -2565,6 +2565,11 @@ document.body.classList.add('ready');
 
     img.src = GIF_URL;
     overlay.style.display = 'flex';
+    overlay.style.pointerEvents = 'all'; // يمنع التحكم بالشاشة
+    // blur على باقي المحتوى
+    document.querySelector('.navbar') && (document.querySelector('.navbar').style.filter = 'blur(4px)');
+    document.querySelector('.players-bar') && (document.querySelector('.players-bar').style.filter = 'blur(4px)');
+    document.querySelector('.page-content') && (document.querySelector('.page-content').style.filter = 'blur(4px)');
     // fade in
     requestAnimationFrame(() => {
       requestAnimationFrame(() => { overlay.style.opacity = '1'; });
@@ -2576,6 +2581,11 @@ document.body.classList.add('ready');
     // اختفي بعد 15 ثانية
     eggTimeout = setTimeout(() => {
       overlay.style.opacity = '0';
+      overlay.style.pointerEvents = 'none';
+      // إزالة blur عن الشاشة
+      document.querySelector('.navbar') && (document.querySelector('.navbar').style.filter = '');
+      document.querySelector('.players-bar') && (document.querySelector('.players-bar').style.filter = '');
+      document.querySelector('.page-content') && (document.querySelector('.page-content').style.filter = '');
       setTimeout(() => {
         overlay.style.display = 'none';
         img.src = '';
