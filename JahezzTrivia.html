@@ -2312,7 +2312,7 @@ function startTimer(seconds) {
     const pct = timeLeft / seconds;
     circle.style.strokeDashoffset = circ * (1 - pct);
     display.textContent = timeLeft;
-    stat.textContent = timeLeft + 's';
+    if(stat) stat.textContent = timeLeft + 's';
     circle.style.stroke = pct < 0.33 ? '#ff3860' : pct < 0.66 ? 'var(--yellow)' : 'var(--cyan)';
   }
   update();
