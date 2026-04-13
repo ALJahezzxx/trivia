@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Jahezz Trivia 0.7</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #1e1e2f, #2a2a3d);
+      color: #fff;
+      margin: 0;
+      padding: 0;
+      text-align: center;
+    }
+
+    h1 {
+      margin-top: 20px;
+      font-size: 2.5em;
+      animation: fadeInDown 1s ease;
+    }
+
+    .question {
+      margin: 30px auto;
+      font-size: 1.5em;
+      animation: fadeIn 1s ease;
+    }
+
+    .answers button {
+      background: #3a3a5c;
+      border: none;
+      color: #fff;
+      padding: 12px 20px;
+      margin: 10px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: transform 0.2s, background 0.3s;
+    }
+
+    .answers button:hover {
+      background: #50507a;
+      transform: scale(1.05);
+    }
+
+    /* Language toggle */
+    .lang-toggle {
+      margin-top: 15px;
+      background: #3a3a5c;
+      border: none;
+      color: #fff;
+      padding: 8px 15px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    .lang-toggle:hover {
+      background: #50507a;
+    }
+
+    /* Plus button */
+    .plus-btn {
+      background: #3a3a5c;
+      border: none;
+      color: #fff;
+      font-size: 2em;
+      border-radius: 50%;
+      width: 60px;
+      height: 60px;
+      cursor: pointer;
+      margin-top: 20px;
+      transition: transform 0.3s;
+    }
+
+    .plus-btn:hover {
+      transform: rotate(90deg);
+    }
+
+    /* Hidden social buttons */
+    .socials {
+      display: none;
+      margin-top: 15px;
+      animation: fadeIn 0.5s ease;
+    }
+
+    .socials img {
+      width: 50px;
+      margin: 0 15px;
+      cursor: pointer;
+      transition: transform 0.2s;
+      pointer-events: auto; /* clickable */
+      user-select: none; /* prevent saving */
+    }
+
+    .socials img:hover {
+      transform: scale(1.2);
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes fadeInDown {
+      from { opacity: 0; transform: translateY(-20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+  <h1 id="title">Jahezz Trivia</h1>
+
+  <button class="lang-toggle" id="langBtn">عربي / English</button>
+
+  <div class="question" id="question">Loading question...</div>
+  <div class="answers" id="answers"></div>
+
+  <!-- Plus button -->
+  <button class="plus-btn" id="plusBtn">+</button>
+  <div class="socials" id="socials">
+    <img src="discord-logo.png" alt="Discord" onclick="window.open('https://discord.com','_blank')">
+    <img src="twitch-logo.png" alt="Twitch" onclick="window.open('https://twitch.tv/YOUR_CHANNEL','_blank')">
+  </div>
+
+  <script>
+    // Trivia data bilingual
+    const trivia = {
+      en: [
+        { q: "What is the capital of Oman?", a: ["Muscat", "Doha", "Dubai"], correct: 0 },
+        { q: "Which planet is known as the Red Planet?", a: ["Mars", "Venus", "Jupiter"], correct: 0 }
+      ],
+      ar: [
+        { q: "ما هي عاصمة سلطنة عمان؟", a: ["مسقط", "الدوحة", "دبي"], correct: 0 },
+        { q: "أي كوكب يُعرف بالكوكب الأحمر؟", a: ["المريخ", "الزهرة", "المشتري"], correct: 0 }
+      ]
+    };
+
+    let current = 0;
+    let lang = "en";
+
+    function loadQuestion() {
+      const q = trivia[lang][current];
+      document.getElementById("question").textContent = q.q;
+      const answersDiv = document.getElementById("answers");
+      answersDiv.innerHTML = "";
+      q.a.forEach((answer, i) => {
+        const btn = document.createElement("button");
+        btn.textContent = answer;
+        btn.onclick = () => checkAnswer(i);
+        answersDiv.appendChild(btn);
+      });
+    }
+
+    function checkAnswer(i) {
+      const q = trivia[lang][current];
+      if (i === q.correct) {
+        alert(lang === "en" ? "Correct!" : "إجابة صحيحة!");
+      } else {
+        alert(lang === "en" ? "Wrong!" : "إجابة خاطئة!");
+      }
+      current = (current + 1) % trivia[lang].length;
+      loadQuestion();
+    }
+
+    // Language toggle
+    document.getElementById("langBtn").addEventListener("click", () => {
+      lang = lang === "en" ? "ar" : "en";
+      current = 0;
+      loadQuestion();
+    });
+
+    // Plus button toggle
+    document.getElementById("plusBtn").addEventListener("click", () => {
+      const socials = document.getElementById("socials");
+      socials.style.display = socials.style.display === "block" ? "none" : "block";
+    });
+
+    // Initialize
+    loadQuestion();
+  </script>
+</body>
+</html>
